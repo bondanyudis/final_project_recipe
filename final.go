@@ -516,21 +516,21 @@ func main() {
 	makanan := e.Group("makanan")
 	//get list all recipe
 	e.GET("/listrecipe", Getlistrecipe)
+	//choose menu
+	e.GET("/ChooseMenu/:id", ChooseMenu)
 	//get all area for mealdb
 	makanan.GET("/area", Getarea)
 	//get all Categories for mealdb
 	makanan.GET("/categories", Getcategories)
 	//get all ingredient for mealbd
 	makanan.GET("/ingredient", Getingredient)
-	//filter by ingredient
-	e.GET("/ChooseMenu/:id", ChooseMenu)
-	//
-	makanan.GET("/filteringredient", FilterByIngredient)
 	//filter by area
+	makanan.GET("/filterarea", FilterByArea)
+	//filter by categories
 	makanan.GET("/filtercategories", FilterByCategories)
 	//filter by ingredient
-	makanan.GET("/filterarea", FilterByArea)
-	//filter by ingredient
+	makanan.GET("/filteringredient", FilterByIngredient)
+	//filter by description
 	makanan.GET("/mealdescription", MealDescription)
 	//Bookmark
 	e.POST("/bookmark", BookmarkMeals)
@@ -540,13 +540,13 @@ func main() {
 	e.DELETE("/bookmark/:id", DeleteBookmark)
 
 	minuman := e.Group("minuman")
-	//get all area for Drink
+	//get all categiries for Drink
 	minuman.GET("/categories", GetcategoriesDrink)
 	//get all ingredient for Drink
 	minuman.GET("/ingredient", GetingredientDrink)
 	//filter ingredient
 	minuman.GET("/filteringredient", FilterByIngredientDrink)
-	//filter by area
+	//filter by categories
 	minuman.GET("/filtercategories", FilterByCategoriesDrink)
 	//filter by ingredient
 	minuman.GET("/drinkdescription", DrinkDescription)
