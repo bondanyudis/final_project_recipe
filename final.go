@@ -1,5 +1,15 @@
 package main
 
+import (
+	"encoding/json"
+	"fmt"
+	"io/ioutil"
+	"net/http"
+	"strconv"
+
+	"github.com/labstack/echo"
+)
+
 type User struct {
 	Id       int    `json:"id" form:"id"`
 	Name     string `json:"name" form:"name"`
@@ -21,7 +31,6 @@ type listFilter struct {
 	Filter string `json:"filter" form:"filter"`
 	Url    string `json:"url" form:"url"`
 }
-
 
 type Categories struct {
 	Meals []struct {
@@ -189,7 +198,251 @@ type DescriptionMeals struct {
 	} `json:"meals"`
 }
 
+var users []User
+var bookmarks []Bookmark
+var filtering []listFilter
 
-func main()  {
-	
+var dataRecipes = []dataRecipe{{Id: 1, Name: "Recipe Meal", Url: "https://www.themealdb.com/api.php"}, {Id: 2, Name: "Recipe Cocktail", Url: "https://www.thecocktaildb.com/api.php"}}
+
+var listfilter = []listFilter{{Filter: "By Area", Url: "/getarea"}, {Filter: "By Categories", Url: "/getcategories"}, {Filter: "By ingredient", Url: "/getingredient"}}
+
+var listfilter2 = []listFilter{{Filter: "By Categories", Url: "/getcategories"}, {Filter: "By ingredient", Url: "/getingredient"}}
+
+func Getlistrecipe(c echo.Context) error {
+	return c.JSON(http.StatusOK, map[string]interface{}{
+
+		"message":  "LIST RECIPE",
+		"response": dataRecipes,
+	})
+}
+
+func Getarea(c echo.Context) error {
+	responsearea, _ := http.Get("https://www.themealdb.com/api/json/v1/1/list.php?a=list")
+	responseData, _ := ioutil.ReadAll(responsearea.Body)
+	defer responsearea.Body.Close()
+
+	var GetArea Area
+	json.Unmarshal(responseData, &GetArea)
+	fmt.Println(GetArea)
+	return c.JSON(http.StatusOK, map[string]interface{}{
+
+		"message":  "Success get area for Meal db",
+		"response": GetArea,
+	})
+}
+
+func Getcategories(c echo.Context) error {
+
+	responsecategories, _ := http.Get("https://www.themealdb.com/api/json/v1/1/list.php?c=list")
+	responseData, _ := ioutil.ReadAll(responsecategories.Body)
+	defer responsecategories.Body.Close()
+
+	var Getcategorie Categories
+	json.Unmarshal(responseData, &Getcategorie)
+
+	return c.JSON(http.StatusOK, map[string]interface{}{
+
+		"message":  "Success get Categories for meal db",
+		"response": Getcategorie,
+	})
+}
+
+func Getingredient(c echo.Context) error {
+
+	responseingredient, _ := http.Get("https://www.themealdb.com/api/json/v1/1/list.php?i=list")
+	responseData, _ := ioutil.ReadAll(responseingredient.Body)
+	defer responseingredient.Body.Close()
+
+	var Getingredient Ingredient
+	json.Unmarshal(responseData, &Getingredient)
+
+	return c.JSON(http.StatusOK, map[string]interface{}{
+
+		"message":  "Success get ingredient for meal db",
+		"response": Getingredient,
+	})
+}
+
+func ChooseMenu(c echo.Context) error {
+	iddata, _ := strconv.Atoi(c.Param("id"))
+	var filter2 []listFilter
+	for _, value := range dataRecipes {
+		if value.Id == iddata {
+			if iddata == 1 {
+				filter2 = append(filtering, listfilter...)
+			} else {
+				filter2 = append(filtering, listfilter2...)
+			}
+			return c.JSON(http.StatusOK, map[string]interface{}{
+				"message":    "success get data",
+				"value":      value,
+				"list_filer": filter2,
+			})
+		}
+	}
+	return c.JSON(http.StatusOK, map[string]interface{}{
+		"message": "data not found",
+	})
+}
+
+func FilterByIngredient(c echo.Context) error {
+	name := c.QueryParam("name")
+	fmt.Println(name)
+	urlFilterIngredient := "https://www.themealdb.com/api/json/v1/1/filter.php?i=" + name
+	responseFilteringredient, _ := http.Get(urlFilterIngredient)
+	responseDataFilterIngredient, _ := ioutil.ReadAll(responseFilteringredient.Body)
+	defer responseFilteringredient.Body.Close()
+
+	var FilterIngredient Filter
+	json.Unmarshal(responseDataFilterIngredient, &FilterIngredient)
+
+	if FilterIngredient.Meals != nil {
+		return c.JSON(http.StatusOK, map[string]interface{}{
+			"message": "Succes get data filter by ingredient",
+			"data":    FilterIngredient,
+		})
+	}
+	return c.JSON(http.StatusOK, map[string]interface{}{
+		"message": "data not found",
+	})
+}
+
+func FilterByCategories(c echo.Context) error {
+	name := c.QueryParam("name")
+	urlFilterCategories := "https://www.themealdb.com/api/json/v1/1/filter.php?c=" + name
+	responseFilterCategories, _ := http.Get(urlFilterCategories)
+	responseDataFilterCategories, _ := ioutil.ReadAll(responseFilterCategories.Body)
+	defer responseFilterCategories.Body.Close()
+
+	var FilterCategories Filter
+	json.Unmarshal(responseDataFilterCategories, &FilterCategories)
+
+	if FilterCategories.Meals != nil {
+		return c.JSON(http.StatusOK, map[string]interface{}{
+			"message": "Succes get data filter by Categories",
+			"data":    FilterCategories,
+		})
+	}
+	return c.JSON(http.StatusOK, map[string]interface{}{
+		"message": "data not found",
+	})
+}
+
+func FilterByArea(c echo.Context) error {
+	name := c.QueryParam("name")
+	urlFilterArea := "https://www.themealdb.com/api/json/v1/1/filter.php?a=" + name
+	responseFilterArea, _ := http.Get(urlFilterArea)
+	responseDataFilterArea, _ := ioutil.ReadAll(responseFilterArea.Body)
+	defer responseFilterArea.Body.Close()
+
+	var FilterArea Filter
+	json.Unmarshal(responseDataFilterArea, &FilterArea)
+
+	if FilterArea.Meals != nil {
+		return c.JSON(http.StatusOK, map[string]interface{}{
+			"message": "Succes get data filter by Area",
+			"data":    FilterArea,
+		})
+	}
+	return c.JSON(http.StatusOK, map[string]interface{}{
+		"message": "data not found",
+	})
+}
+
+func MealDescription(c echo.Context) error {
+	id := c.QueryParam("id")
+	urlDescriptionMeals := "https://www.themealdb.com/api/json/v1/1/lookup.php?i=" + id
+	responseDescriptionMeals, _ := http.Get(urlDescriptionMeals)
+	responseDataDescriptionMeals, _ := ioutil.ReadAll(responseDescriptionMeals.Body)
+	defer responseDescriptionMeals.Body.Close()
+
+	var FilterDescriptionMeals DescriptionMeals
+	json.Unmarshal(responseDataDescriptionMeals, &FilterDescriptionMeals)
+
+	if FilterDescriptionMeals.Meals != nil {
+		return c.JSON(http.StatusOK, map[string]interface{}{
+			"message": "Succes get data filter by Categories",
+			"data":    FilterDescriptionMeals,
+		})
+	}
+	return c.JSON(http.StatusOK, map[string]interface{}{
+		"message": "data not found",
+		"data":    nil,
+	})
+}
+
+func BookmarkMeals(c echo.Context) error {
+	bookmark := Bookmark{}
+	c.Bind(&bookmark)
+
+	if len(bookmarks) == 0 {
+		bookmark.Id = 1
+	} else {
+		newId := bookmarks[len(bookmarks)-1].Id + 1
+		bookmark.Id = newId
+		bookmark.Id = newId
+	}
+	bookmarks = append(bookmarks, bookmark)
+	return c.JSON(http.StatusOK, map[string]interface{}{
+		"message": "Success Bookmart data recipe",
+		"user":    bookmark,
+	})
+}
+
+func GetBookmarkMeals(c echo.Context) error {
+
+	return c.JSON(http.StatusOK, map[string]interface{}{
+
+		"message":  "List Bookmart meals By Id",
+		"response": bookmarks,
+	})
+}
+
+func DeleteBookmark(c echo.Context) error {
+	iddata, _ := strconv.Atoi(c.Param("id"))
+	for index, value := range bookmarks {
+		if value.Id == iddata {
+			bookmarks[index] = bookmarks[len(bookmarks)-1]
+			bookmarks[len(bookmarks)-1] = Bookmark{}
+			bookmarks = bookmarks[:len(bookmarks)-1]
+			return c.JSON(http.StatusOK, map[string]interface{}{
+				"message": "data successfully delete,",
+				"users":   value,
+			})
+		}
+	}
+	return c.JSON(http.StatusOK, map[string]interface{}{
+		"message": "data not found",
+	})
+}
+
+func main() {
+	e := echo.New()
+	makanan := e.Group("makanan")
+	//get list all recipe
+	e.GET("/listrecipe", Getlistrecipe)
+	//get all area for mealdb
+	makanan.GET("/area", Getarea)
+	//get all Categories for mealdb
+	makanan.GET("/categories", Getcategories)
+	//get all ingredient for mealbd
+	makanan.GET("/ingredient", Getingredient)
+	//filter by ingredient
+	e.GET("/ChooseMenu/:id", ChooseMenu)
+	//
+	makanan.GET("/filteringredient", FilterByIngredient)
+	//filter by area
+	makanan.GET("/filtercategories", FilterByCategories)
+	//filter by ingredient
+	makanan.GET("/filterarea", FilterByArea)
+	//filter by ingredient
+	makanan.GET("/mealdescription", MealDescription)
+	//Bookmark
+	e.POST("/bookmark", BookmarkMeals)
+	//getBookmark
+	e.GET("/bookmark", GetBookmarkMeals)
+	//delete bookmark
+	e.DELETE("/bookmark/:id", DeleteBookmark)
+
+	e.Logger.Fatal(e.Start(":3008"))
 }
