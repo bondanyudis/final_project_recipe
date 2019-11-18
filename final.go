@@ -415,7 +415,36 @@ func DeleteBookmark(c echo.Context) error {
 		"message": "data not found",
 	})
 }
+func GetcategoriesDrink(c echo.Context) error {
 
+	responsecategories, _ := http.Get("https://www.thecocktaildb.com/api/json/v1/1/list.php?c=list")
+	responseData, _ := ioutil.ReadAll(responsecategories.Body)
+	defer responsecategories.Body.Close()
+
+	var Getcategorie DrinkFilterCategory
+	json.Unmarshal(responseData, &Getcategorie)
+
+	return c.JSON(http.StatusOK, map[string]interface{}{
+
+		"message":  "Success get Categories for meal db",
+		"response": Getcategorie,
+	})
+}
+func GetingredientDrink(c echo.Context) error {
+
+	responseingredient, _ := http.Get("https://www.thecocktaildb.com/api/json/v1/1/list.php?i=list")
+	responseData, _ := ioutil.ReadAll(responseingredient.Body)
+	defer responseingredient.Body.Close()
+
+	var Getingredient DrinkFilterIngredient
+	json.Unmarshal(responseData, &Getingredient)
+
+	return c.JSON(http.StatusOK, map[string]interface{}{
+
+		"message":  "Success get ingredient for meal db",
+		"response": Getingredient,
+	})
+}
 func main() {
 	e := echo.New()
 	makanan := e.Group("makanan")
@@ -444,5 +473,10 @@ func main() {
 	//delete bookmark
 	e.DELETE("/bookmark/:id", DeleteBookmark)
 
+	minuman := e.Group("minuman")
+	//get all area for Drink
+	minuman.GET("/categories", GetcategoriesDrink)
+	//get all ingredient for Drink
+	minuman.GET("/ingredient", GetingredientDrink)
 	e.Logger.Fatal(e.Start(":3008"))
 }
