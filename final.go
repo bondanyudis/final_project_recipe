@@ -445,6 +445,72 @@ func GetingredientDrink(c echo.Context) error {
 		"response": Getingredient,
 	})
 }
+
+func FilterByIngredientDrink(c echo.Context) error {
+	name := c.QueryParam("name")
+	fmt.Println(name)
+	urlFilterIngredient := "https://www.thecocktaildb.com/api/json/v1/1/filter.php?i=" + name
+	responseFilteringredient, _ := http.Get(urlFilterIngredient)
+	responseDataFilterIngredient, _ := ioutil.ReadAll(responseFilteringredient.Body)
+	defer responseFilteringredient.Body.Close()
+
+	var FilterIngredient FilterDrink
+	json.Unmarshal(responseDataFilterIngredient, &FilterIngredient)
+
+	if FilterIngredient.Drinks != nil {
+		return c.JSON(http.StatusOK, map[string]interface{}{
+			"message": "Succes get data filter by ingredient",
+			"data":    FilterIngredient,
+		})
+	}
+	return c.JSON(http.StatusOK, map[string]interface{}{
+		"message": "data not found",
+	})
+}
+
+func FilterByCategoriesDrink(c echo.Context) error {
+	name := c.QueryParam("name")
+	urlFilterCategories := "https://www.thecocktaildb.com/api/json/v1/1/filter.php?c=" + name
+	responseFilterCategories, _ := http.Get(urlFilterCategories)
+	responseDataFilterCategories, _ := ioutil.ReadAll(responseFilterCategories.Body)
+	defer responseFilterCategories.Body.Close()
+
+	var FilterCategories FilterDrink
+	json.Unmarshal(responseDataFilterCategories, &FilterCategories)
+
+	if FilterCategories.Drinks != nil {
+		return c.JSON(http.StatusOK, map[string]interface{}{
+			"message": "Succes get data filter by Categories",
+			"data":    FilterCategories,
+		})
+	}
+	return c.JSON(http.StatusOK, map[string]interface{}{
+		"message": "data not found",
+	})
+}
+
+func DrinkDescription(c echo.Context) error {
+	id := c.QueryParam("id")
+	urlDescriptionDrinks := "https://www.thecocktaildb.com/api/json/v1/1/lookup.php?i=" + id
+	responseDescriptionDrinks, _ := http.Get(urlDescriptionDrinks)
+	responseDataDescriptionMeals, _ := ioutil.ReadAll(responseDescriptionDrinks.Body)
+	defer responseDescriptionDrinks.Body.Close()
+
+	var FilterDescriptionDrinks DescriptionDrinks
+	json.Unmarshal(responseDataDescriptionMeals, &FilterDescriptionDrinks)
+
+	if FilterDescriptionDrinks.Drinks != nil {
+		return c.JSON(http.StatusOK, map[string]interface{}{
+			"message": "Succes get detail cocktail",
+			"data":    FilterDescriptionDrinks,
+		})
+	}
+	return c.JSON(http.StatusOK, map[string]interface{}{
+		"message": "data not found",
+		"data":    nil,
+	})
+}
+
 func main() {
 	e := echo.New()
 	makanan := e.Group("makanan")
@@ -478,5 +544,11 @@ func main() {
 	minuman.GET("/categories", GetcategoriesDrink)
 	//get all ingredient for Drink
 	minuman.GET("/ingredient", GetingredientDrink)
+	//filter ingredient
+	minuman.GET("/filteringredient", FilterByIngredientDrink)
+	//filter by area
+	minuman.GET("/filtercategories", FilterByCategoriesDrink)
+	//filter by ingredient
+	minuman.GET("/drinkdescription", DrinkDescription)
 	e.Logger.Fatal(e.Start(":3008"))
 }
